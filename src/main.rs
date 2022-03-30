@@ -1,8 +1,5 @@
 use std::fs;
-use std::collections::HashMap;
 use std::error::Error;
-
-type BoxResult<T> = Result<T,Box<dyn Error>>;
 
 fn parse_csv() -> Vec<Vec<String>> {
     let contents = fs::read_to_string("../test.csv")
@@ -40,129 +37,30 @@ fn cell_content_from_refrence(cells: &Vec<Vec<String>>, cell_ref: String) -> Str
     cells[row_int][col_int].clone()
 }
 
-fn eval_lisp(cells: &Vec<Vec<String>>, sexp: String) -> String {
+fn calc_lisp(cells: &Vec<Vec<String>>, sexp: String) -> String {
 
     cell_content_from_refrence(&cells, sexp.replace("(", "").replace(")", ""))
 }
 
-fn eval_cell_references(mut cells: Vec<Vec<String>>) -> Vec<Vec<String>> {
+fn lookup_cell_references(mut cells: Vec<Vec<String>>) -> Vec<Vec<String>> {
     for i in 0..cells.len(){
         for j in 0..cells[i].len(){
             let cell = cells[i][j].clone();
             if cell.len() > 0 && cell.chars().next().unwrap() == '('{
-                cells[i][j] = eval_lisp(&cells, cell)
+                cells[i][j] = calc_lisp(&cells, cell)
             }
         }
     }
     cells
 }
 
-type Symbol = String;
-
-#[derive(Debug)]
-enum Number {
-    IntNum(i32),
-    FloatNum(f64)
-}
-
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 enum Atom {
-    Symbol(Symbol),
-    Number(Number)
-}
-
-#[derive(Debug)]
-enum Exp {
-    Atom(Atom),
-    List(Vec<Exp>)
-}
-
-fn read_from_tokens(tokens: Vec<String>, mut pointer: usize) -> (Exp, usize) {
-    let token = tokens[pointer].clone();
-    pointer += 1;
-    if token == "(" {
-        let mut l_res = Vec::new();
-        while tokens[pointer] != ")" {
-            let (exp, p) = read_from_tokens(tokens.clone(), pointer);
-            l_res.push(exp);
-            pointer = p;
-        }
-        (Exp::List(l_res), pointer+1)
-    } else {
-        let res = token.parse::<i32>();
-        match res {
-            Ok(fc) => (Exp::Atom(Atom::Number(Number::IntNum(fc))), pointer),
-            Err(_) => {
-                let res = token.parse::<f64>();
-                match res {
-                    Ok(fc) => (Exp::Atom(Atom::Number(Number::FloatNum(fc))), pointer),
-                    Err(_) => (Exp::Atom(Atom::Symbol(token)), pointer)
-                }
-            }
-        }
-    }
-}
-
-// fn travers_ast(list_item: Exp) -> BoxResult<Exp> {
-//     match list_item {
-//         Exp::Atom(ref res) => match res {
-//             Atom::Number(_) => return Ok(list_item),
-//             Atom::Symbol(_) => return Ok(list_item)
-//         }
-//         Exp::List(ref list) => {
-//             match list[0] {
-//                 Exp::List(_) => Err("wrong"),
-//                 Exp::Atom(atom) => {
-//                     match atom {
-//                         Atom::Symbol(symb) => {
-//                             let args: Vec<i32> = Vec::new();
-//                             for arg in list[1..2].iter(){
-//                                 let new_arg = travers_ast(arg).unwrap();
-//                                 match new_arg {
-//                                     Exp::List(_) => panic!("syntax error"),
-//                                     Exp::Atom(atom) => {
-//                                         match atom {
-//                                             Atom::Symbol(_) => panic!("syntax error"),
-//                                             Atom::Number(num) => {
-//                                                 match num {
-//                                                     Number::FloatNum(_) => panic!("syntax error"),
-//                                                     Number::IntNum(int_n) => args.push(int_n)
-//                                                 }
-//                                             }
-//                                         }
-//                                     }
-//                                 }
-//                             }
-//                             match symb.as_str() {
-//                                 "+" => {
-//                                     return Ok(Exp::Atom(Atom::Number(Number::IntNum(args[0] + args[1]))));
-//                                 }
-//                                 _ => panic!("syntax error"),                            }
-//                         }
-//                         Atom::Number(_) => panic!("syntax error"),
-//                     }
-//                 }
-//         }
-//     }
-// }
-
-fn eval(list_item: Exp) -> Atom {
-    match list_item {
-        Exp::Atom(a) => return a,
-        Exp::List(list) => {
-            let stack: Vec<Atom> = Vec::new();
-            for item in list.iter(){
-                match item {
-                    Exp::Atom(a) => stack.push(a),
-                    Exp::List(list) {
-
-
-                    }
-                };
-            };
-        }
-    }
-
+    Open,
+    Close,
+    Int(i32),
+    Float(f64),
+    Symbol(String)
 }
 
 fn tokenize(input: &String) -> Vec<String> {
@@ -173,6 +71,85 @@ fn tokenize(input: &String) -> Vec<String> {
          .collect::<Vec<String>>()
 }
 
+fn string_to_atom(string: String) -> Vec<Atom> {
+    let atom = match string.as_str() {
+        "(" => Atom::Open,
+        ")" => Atom::Close,
+        _ => {
+            let res = string.parse::<i32>();
+            match res {
+                Ok(fc) => Atom::Int(fc),
+                Err(_) => {
+                    let res = string.parse::<f64>();
+                    match res {
+                        Ok(fc) => Atom::Float(fc),
+                        Err(_) => Atom::Symbol(string)
+                    }
+                }
+            }
+        }
+    };
+    vec!(atom)
+}
+
+fn read_from_tokens(tokens: Vec<String>) -> Vec<Atom> {
+    let size = tokens.len() * 2;
+    tokens.iter().fold(Vec::with_capacity(size), |mut acc, v| {
+        acc.extend(string_to_atom(v.to_string())); acc
+    })
+}
+
+fn eval(tokens: Vec<Atom>) -> Result<Vec<Atom>, Box<dyn Error>>{
+    let mut stack = Vec::new();
+
+    for token in &tokens{
+        // println!("sta: {:?}", stack);
+        match token {
+            Atom::Close => {
+                let mut sub_stack = Vec::new();
+
+                loop {
+                    let atom = stack.pop();
+                    match atom {
+                        Some(a) => {
+                            match a{
+                                Atom::Open => break,
+                                _ => sub_stack.push(a)
+                            }
+                        },
+                        None => Err("Syntax Error: Missing opening parenthese")?
+                    }
+                }
+                if sub_stack.len() < 2 {
+                    Err("Syntax Error: Not enough elements in expression")?
+                }
+                // println!("sub: {:?}", sub_stack);
+                let op = sub_stack.pop().unwrap();
+                match op {
+                    Atom::Symbol(s) => {
+                        if s == "+" {
+                            let int_stack: Vec<i32> = sub_stack.iter().map(|a| -> i32 { match a {
+                                Atom::Int(i) => return *i,
+                                _ => return 0
+                            }}).collect();
+
+                            let res: i32 = int_stack.iter().fold(0, |acc, a| acc + a);
+                            stack.push(Atom::Int(res))
+                        }
+                    },
+                    _ => ()
+                }
+            }
+            _ => stack.push(token.clone())
+        }
+    }
+    if stack.len() == 1 {
+        Ok(stack)
+    } else {
+        Err("Syntax Error: Missing closing parenthese")?
+    }
+}
+
 fn main() {
     // let cells = parse_csv();
     // let new_cells = eval_cell_references(cells);
@@ -180,7 +157,10 @@ fn main() {
 
     // let item = Exp::List(Vec::from([Exp::Atom(String::from("hallo")), Exp::Atom(String::from("no"))]));
     // travers_ast(&item);
-    let tests = String::from("(+ 5 (+ (+ 0.5 1) 2))");
+    let tests = String::from("(+ 5 (+ (+ 5 9) (+ 3 3 3)))");
     // travers_ast(&read_from_tokens(tokenize(&tests), 0));
-    println!("{:?}", read_from_tokens(tokenize(&tests), 0));
+    let tokens = read_from_tokens(tokenize(&tests));
+    println!("{:?}", tokens);
+    let res = eval(tokens);
+    println!("{:?}", res);
 }
