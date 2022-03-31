@@ -90,3 +90,17 @@ pub fn smaller(tokens: Vec<Atom>) -> Result<Atom, Box<dyn Error>> {
         Err("Syntax Error: > requires exactly 2 arguments")?
     }
 }
+
+pub fn if_branch(mut tokens: Vec<Atom>) -> Result<Atom, Box<dyn Error>> {
+    if tokens.len() == 3 {
+        let first = tokens.pop().unwrap();
+        match first {
+            Atom::True => Ok(tokens[1].clone()),
+            Atom::False => Ok(tokens[0].clone()),
+            _ => Err("Syntax Error: first element of 'if' has to be a boolean")?
+        }
+
+    } else {
+        Err("Syntax Error: 'if' requires exactly 3 arguments")?
+    }
+}

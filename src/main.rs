@@ -5,6 +5,12 @@ use std::collections::HashMap;
 pub mod funcs;
 use funcs::Atom;
 
+fn main() {
+    let cells = parse_csv();
+    let new_cells = lookup_cell_references(cells);
+    println!("new cells: {:?}", new_cells);
+}
+
 fn parse_csv() -> Vec<Vec<String>> {
     let contents = fs::read_to_string("../test.csv")
         .expect("Something went wrong reading the file");
@@ -21,31 +27,6 @@ fn parse_csv() -> Vec<Vec<String>> {
     row_vec
 }
 
-fn cell_content_from_refrence(cells: &Vec<Vec<String>>, cell_ref: String) -> String {
-    // TODO: throw an error when index outside cells shape
-    let row_str: String = cell_ref.chars().skip(1).collect();
-    let row_int = row_str.parse::<usize>().unwrap() -1;
-    let col_str = cell_ref.chars().nth(0).unwrap();
-    let col_int: usize = match col_str {
-        'A' => 0,
-        'B' => 1,
-        'C' => 2,
-        'D' => 3,
-        'E' => 4,
-        'F' => 5,
-        'G' => 6,
-        'H' => 7,
-        'I' => 8,
-        _   => 0,
-    };
-    cells[row_int][col_int].clone()
-}
-
-fn calc_lisp(cells: &Vec<Vec<String>>, sexp: String) -> String {
-
-    cell_content_from_refrence(&cells, sexp.replace("(", "").replace(")", ""))
-}
-
 fn lookup_cell_references(mut cells: Vec<Vec<String>>) -> Vec<Vec<String>> {
     for i in 0..cells.len(){
         for j in 0..cells[i].len(){
@@ -58,6 +39,18 @@ fn lookup_cell_references(mut cells: Vec<Vec<String>>) -> Vec<Vec<String>> {
     cells
 }
 
+fn calc_lisp(cells: &Vec<Vec<String>>, sexp: String) -> String {
+    let tokens = tokenize(&sexp);
+    let size = tokens.len() * 2;
+    let tokens_typed: Vec<Atom> = tokens.iter().fold(Vec::with_capacity(size), |mut acc, v| {
+        acc.extend(string_to_atom(v.to_string(), &cells)); acc
+    });
+    match eval(tokens_typed) {
+        Ok(a) => a,
+        Err(e) => e.to_string()
+    }
+}
+
 fn tokenize(input: &String) -> Vec<String> {
     input.replace("(", " ( ")
          .replace(")", " ) ")
@@ -66,7 +59,7 @@ fn tokenize(input: &String) -> Vec<String> {
          .collect::<Vec<String>>()
 }
 
-fn string_to_atom(string: String) -> Vec<Atom> {
+fn string_to_atom(string: String, cells: &Vec<Vec<String>>) -> Vec<Atom> {
     let atom = match string.as_str() {
         "(" => Atom::Open,
         ")" => Atom::Close,
@@ -74,18 +67,37 @@ fn string_to_atom(string: String) -> Vec<Atom> {
             let res = string.parse::<f64>();
             match res {
                 Ok(fc) => Atom::Number(fc),
-                Err(_) => Atom::Symbol(string)
+                Err(_) => match cell_content_from_refrence(cells, string.clone()) {
+                    Some(num) => num,
+                    None => Atom::Symbol(string)
+                }
             }
         }
     };
     vec!(atom)
 }
 
-fn read_from_tokens(tokens: Vec<String>) -> Vec<Atom> {
-    let size = tokens.len() * 2;
-    tokens.iter().fold(Vec::with_capacity(size), |mut acc, v| {
-        acc.extend(string_to_atom(v.to_string())); acc
-    })
+fn cell_content_from_refrence(cells: &Vec<Vec<String>>, cell_ref: String) -> Option<Atom> {
+    // TODO: throw an error when index outside cells shape
+    let col_str = cell_ref.chars().nth(0).unwrap();
+    let col_int: usize = match col_str {
+        'A' => Some(0),
+        'B' => Some(1),
+        'C' => Some(2),
+        'D' => Some(3),
+        'E' => Some(4),
+        'F' => Some(5),
+        'G' => Some(6),
+        'H' => Some(7),
+        'I' => Some(8),
+        _   => None,
+    }?;
+    let row_str: String = cell_ref.chars().skip(1).collect();
+    let row_int = row_str.parse::<usize>().ok()? - 1;
+
+    let res_str = cells.get(row_int)?.get(col_int)?;
+    let res_num = res_str.parse::<f64>().ok()?;
+    Some(Atom::Number(res_num))
 }
 
 fn eval(tokens: Vec<Atom>) -> Result<String, Box<dyn Error>>{
@@ -95,6 +107,7 @@ fn eval(tokens: Vec<Atom>) -> Result<String, Box<dyn Error>>{
     ops.insert("*".to_string(), funcs::multiply);
     ops.insert(">".to_string(), funcs::greater);
     ops.insert("<".to_string(), funcs::smaller);
+    ops.insert("if".to_string(), funcs::if_branch);
     let mut stack = Vec::new();
 
     for token in &tokens{
@@ -154,17 +167,3 @@ fn eval(tokens: Vec<Atom>) -> Result<String, Box<dyn Error>>{
     }
 }
 
-fn main() {
-    // let cells = parse_csv();
-    // let new_cells = eval_cell_references(cells);
-    // println!("new cells: {:?}", new_cells);
-
-    // let item = Exp::List(Vec::from([Exp::Atom(String::from("hallo")), Exp::Atom(String::from("no"))]));
-    // travers_ast(&item);
-    let tests = String::from("(< 2 3)");
-    // travers_ast(&read_from_tokens(tokenize(&tests), 0));
-    let tokens = read_from_tokens(tokenize(&tests));
-    println!("{:?}", tokens);
-    let res = eval(tokens);
-    println!("{:?}", res);
-}
