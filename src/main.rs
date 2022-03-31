@@ -58,8 +58,7 @@ fn lookup_cell_references(mut cells: Vec<Vec<String>>) -> Vec<Vec<String>> {
 enum Atom {
     Open,
     Close,
-    Int(i32),
-    Float(f64),
+    Number(f64),
     Symbol(String)
 }
 
@@ -76,16 +75,10 @@ fn string_to_atom(string: String) -> Vec<Atom> {
         "(" => Atom::Open,
         ")" => Atom::Close,
         _ => {
-            let res = string.parse::<i32>();
+            let res = string.parse::<f64>();
             match res {
-                Ok(fc) => Atom::Int(fc),
-                Err(_) => {
-                    let res = string.parse::<f64>();
-                    match res {
-                        Ok(fc) => Atom::Float(fc),
-                        Err(_) => Atom::Symbol(string)
-                    }
-                }
+                Ok(fc) => Atom::Number(fc),
+                Err(_) => Atom::Symbol(string)
             }
         }
     };
@@ -99,7 +92,7 @@ fn read_from_tokens(tokens: Vec<String>) -> Vec<Atom> {
     })
 }
 
-fn eval(tokens: Vec<Atom>) -> Result<Vec<Atom>, Box<dyn Error>>{
+fn eval(tokens: Vec<Atom>) -> Result<String, Box<dyn Error>>{
     let mut stack = Vec::new();
 
     for token in &tokens{
@@ -128,13 +121,14 @@ fn eval(tokens: Vec<Atom>) -> Result<Vec<Atom>, Box<dyn Error>>{
                 match op {
                     Atom::Symbol(s) => {
                         if s == "+" {
-                            let int_stack: Vec<i32> = sub_stack.iter().map(|a| -> i32 { match a {
-                                Atom::Int(i) => return *i,
-                                _ => return 0
-                            }}).collect();
-
-                            let res: i32 = int_stack.iter().fold(0, |acc, a| acc + a);
-                            stack.push(Atom::Int(res))
+                            let res: Result<f64, _> = sub_stack.iter().try_fold(0.0, |acc, a| match a {
+                                Atom::Number(num) => Ok(acc + num),
+                                _ => Err("Syntax Error: + can only be used with numbers")
+                            });
+                            match res {
+                                Ok(val) => stack.push(Atom::Number(val)),
+                                Err(e) => Err(e)?
+                            }
                         }
                     },
                     _ => ()
@@ -144,7 +138,16 @@ fn eval(tokens: Vec<Atom>) -> Result<Vec<Atom>, Box<dyn Error>>{
         }
     }
     if stack.len() == 1 {
-        Ok(stack)
+        match stack[0] {
+            Atom::Number(num) => {
+                if num.fract() == 0.0 {
+                    return Ok((num as i32).to_string())
+                } else {
+                    return Ok(num.to_string())
+                }
+            },
+            _ => Err("Syntax Error: result is not a number")?
+        }
     } else {
         Err("Syntax Error: Missing closing parenthese")?
     }
@@ -157,7 +160,7 @@ fn main() {
 
     // let item = Exp::List(Vec::from([Exp::Atom(String::from("hallo")), Exp::Atom(String::from("no"))]));
     // travers_ast(&item);
-    let tests = String::from("(+ 5 (+ (+ 5 9) (+ 3 3 3)))");
+    let tests = String::from("(+ 5 (+ (+ 3 9.1) (+ 3 3 3)))");
     // travers_ast(&read_from_tokens(tokenize(&tests), 0));
     let tokens = read_from_tokens(tokenize(&tests));
     println!("{:?}", tokens);
