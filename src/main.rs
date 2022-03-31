@@ -1,5 +1,9 @@
 use std::fs;
 use std::error::Error;
+use std::collections::HashMap;
+
+pub mod funcs;
+use funcs::Atom;
 
 fn parse_csv() -> Vec<Vec<String>> {
     let contents = fs::read_to_string("../test.csv")
@@ -54,14 +58,6 @@ fn lookup_cell_references(mut cells: Vec<Vec<String>>) -> Vec<Vec<String>> {
     cells
 }
 
-#[derive(Clone, Debug)]
-enum Atom {
-    Open,
-    Close,
-    Number(f64),
-    Symbol(String)
-}
-
 fn tokenize(input: &String) -> Vec<String> {
     input.replace("(", " ( ")
          .replace(")", " ) ")
@@ -93,6 +89,12 @@ fn read_from_tokens(tokens: Vec<String>) -> Vec<Atom> {
 }
 
 fn eval(tokens: Vec<Atom>) -> Result<String, Box<dyn Error>>{
+    let mut ops: HashMap<String, fn(Vec<Atom>) -> Result<Atom, Box<dyn Error>>> = HashMap::new();
+    ops.insert("+".to_string(), funcs::plus);
+    ops.insert("-".to_string(), funcs::minus);
+    ops.insert("*".to_string(), funcs::multiply);
+    ops.insert(">".to_string(), funcs::greater);
+    ops.insert("<".to_string(), funcs::smaller);
     let mut stack = Vec::new();
 
     for token in &tokens{
@@ -120,18 +122,17 @@ fn eval(tokens: Vec<Atom>) -> Result<String, Box<dyn Error>>{
                 let op = sub_stack.pop().unwrap();
                 match op {
                     Atom::Symbol(s) => {
-                        if s == "+" {
-                            let res: Result<f64, _> = sub_stack.iter().try_fold(0.0, |acc, a| match a {
-                                Atom::Number(num) => Ok(acc + num),
-                                _ => Err("Syntax Error: + can only be used with numbers")
-                            });
-                            match res {
-                                Ok(val) => stack.push(Atom::Number(val)),
-                                Err(e) => Err(e)?
-                            }
+                        match ops.get(&s){
+                            Some(val_op) => {
+                                match val_op(sub_stack) {
+                                    Ok(res) => stack.push(res),
+                                    Err(e) => Err(e)?
+                                }
+                            },
+                            None => Err(format!("Syntax Error: func '{}' not supported", s))?
                         }
                     },
-                    _ => ()
+                    _ => Err("Syntax Error: first element has to be a function")?
                 }
             }
             _ => stack.push(token.clone())
@@ -146,7 +147,7 @@ fn eval(tokens: Vec<Atom>) -> Result<String, Box<dyn Error>>{
                     return Ok(num.to_string())
                 }
             },
-            _ => Err("Syntax Error: result is not a number")?
+            _ => Err(format!("Syntax Error: result '{:?}' is not a number", stack[0]))?
         }
     } else {
         Err("Syntax Error: Missing closing parenthese")?
@@ -160,7 +161,7 @@ fn main() {
 
     // let item = Exp::List(Vec::from([Exp::Atom(String::from("hallo")), Exp::Atom(String::from("no"))]));
     // travers_ast(&item);
-    let tests = String::from("(+ 5 (+ (+ 3 9.1) (+ 3 3 3)))");
+    let tests = String::from("(< 2 3)");
     // travers_ast(&read_from_tokens(tokenize(&tests), 0));
     let tokens = read_from_tokens(tokenize(&tests));
     println!("{:?}", tokens);
