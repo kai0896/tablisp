@@ -4,7 +4,7 @@ use std::collections::HashMap;
 pub mod funcs;
 use funcs::Atom;
 
-pub fn lookup_cell_references(mut cells: Vec<Vec<String>>) -> Vec<Vec<String>> {
+pub fn compute_cells(mut cells: Vec<Vec<String>>) -> Vec<Vec<String>> {
     for i in 0..cells.len(){
         for j in 0..cells[i].len(){
             let cell = cells[i][j].clone();
@@ -63,7 +63,6 @@ fn cell_content_from_range(cells: &Vec<Vec<String>>, cell_range: String) -> Opti
         let range_begin = get_cell_coordinates(cell_refs[0].clone())?;
         let range_end = get_cell_coordinates(cell_refs[1].clone())?;
 
-
         let mut res: Vec<Atom> = Vec::new(); // maybe init with size
         for row in range_begin.0..=range_end.0 {
             for col in range_begin.1..=range_end.1 {
@@ -121,6 +120,7 @@ fn eval(tokens: Vec<Atom>) -> Result<String, Box<dyn Error>>{
     ops.insert(">".to_string(), funcs::greater);
     ops.insert("<".to_string(), funcs::smaller);
     ops.insert("if".to_string(), funcs::if_branch);
+    ops.insert("max".to_string(), funcs::max_num);
     let mut stack = Vec::new();
 
     for token in &tokens{

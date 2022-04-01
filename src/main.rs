@@ -10,7 +10,7 @@ fn main() {
                 .expect("Something went wrong reading the file");
 
             let cells = parse_csv(contents);
-            let new_cells = calc::lookup_cell_references(cells);
+            let new_cells = calc::compute_cells(cells);
 
             let new_csv = make_csv(new_cells);
             print!("new cells: \n\n{}", new_csv);
@@ -45,7 +45,6 @@ fn make_csv(cells: Vec<Vec<String>>) -> String {
             let cell = cells[i][j].clone();
             res.push_str(cell.as_str());
             res.push_str(", ");
-
         }
         res.pop();
         res.pop();
