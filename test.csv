@@ -1,5 +1,7 @@
-Kai, 25
-James, 60
-Me, (+ B1 B2)
+Kai, 25, new
+James, 60, 1
+Me, (+ B1:C2)
 Him, (- 10 B3)
 New Guy, (if (> B1 18) 1 0)
+test, (* 3.5 2)
+hello, (+ A1:A3)
