@@ -121,6 +121,7 @@ fn eval(tokens: Vec<Atom>) -> Result<String, Box<dyn Error>>{
     ops.insert("<".to_string(), funcs::smaller);
     ops.insert("if".to_string(), funcs::if_branch);
     ops.insert("max".to_string(), funcs::max_num);
+    ops.insert("min".to_string(), funcs::min_num);
     let mut stack = Vec::new();
 
     for token in &tokens{

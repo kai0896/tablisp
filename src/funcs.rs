@@ -1,44 +1,44 @@
 use std::error::Error;
 
-// #[derive(Clone, Debug)]
-// pub enum Atom {
-//     Open,
-//     Close,
-//     Number(f64),
-//     Symbol(String),
-//     True,
-//     False,
-// }
+#[derive(Clone, Debug)]
+pub enum Atom {
+    Open,
+    Close,
+    Number(f64),
+    Symbol(String),
+    True,
+    False,
+}
 
-// pub fn plus(tokens: Vec<Atom>) -> Result<Atom, Box<dyn Error>> {
-//     let res: Result<f64, _> = tokens.iter().try_fold(0.0, |acc, a| match a {
-//         Atom::Number(num) => Ok(acc + num),
-//         _ => Err("Syntax Error: + can only be used with numbers")
-//     });
-//     Ok(Atom::Number(res?))
-// }
+pub fn plus(tokens: Vec<Atom>) -> Result<Atom, Box<dyn Error>> {
+    let res: Result<f64, _> = tokens.iter().try_fold(0.0, |acc, a| match a {
+        Atom::Number(num) => Ok(acc + num),
+        _ => Err("Syntax Error: + can only be used with numbers")
+    });
+    Ok(Atom::Number(res?))
+}
 
-// pub fn multiply(tokens: Vec<Atom>) -> Result<Atom, Box<dyn Error>> {
-//     let res: Result<f64, _> = tokens.iter().try_fold(1.0, |acc, a| match a {
-//         Atom::Number(num) => Ok(acc * num),
-//         _ => Err("Syntax Error: + can only be used with numbers")
-//     });
-//     Ok(Atom::Number(res?))
-// }
+pub fn multiply(tokens: Vec<Atom>) -> Result<Atom, Box<dyn Error>> {
+    let res: Result<f64, _> = tokens.iter().try_fold(1.0, |acc, a| match a {
+        Atom::Number(num) => Ok(acc * num),
+        _ => Err("Syntax Error: + can only be used with numbers")
+    });
+    Ok(Atom::Number(res?))
+}
 
-// pub fn minus(mut tokens: Vec<Atom>) -> Result<Atom, Box<dyn Error>> {
-//     let first = tokens.pop().unwrap();
-//     match first {
-//         Atom::Number(first_num) => {
-//             let res: Result<f64, Box<dyn Error>> = tokens.iter().try_fold(first_num, |acc, a| match a {
-//                 Atom::Number(num) => Ok(acc - num),
-//                 _ => Err("Syntax Error: - can only be used with numbers")?
-//             });
-//             Ok(Atom::Number(res?))
-//         },
-//         _ => Err("Syntax Error: - can only be used with numbers")?
-//     }
-// }
+pub fn minus(mut tokens: Vec<Atom>) -> Result<Atom, Box<dyn Error>> {
+    let first = tokens.pop().unwrap();
+    match first {
+        Atom::Number(first_num) => {
+            let res: Result<f64, Box<dyn Error>> = tokens.iter().try_fold(first_num, |acc, a| match a {
+                Atom::Number(num) => Ok(acc - num),
+                _ => Err("Syntax Error: - can only be used with numbers")?
+            });
+            Ok(Atom::Number(res?))
+        },
+        _ => Err("Syntax Error: - can only be used with numbers")?
+    }
+}
 
 pub fn greater(tokens: Vec<Atom>) -> Result<Atom, Box<dyn Error>> {
     if tokens.len() == 2 {
