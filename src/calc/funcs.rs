@@ -40,6 +40,19 @@ pub fn minus(mut tokens: Vec<Atom>) -> Result<Atom, Box<dyn Error>> {
     }
 }
 
+pub fn divide(mut tokens: Vec<Atom>) -> Result<Atom, Box<dyn Error>> {
+    let first = tokens.pop().unwrap();
+    match first {
+        Atom::Number(first_num) => {
+            let res: Result<f64, Box<dyn Error>> = tokens.iter().try_fold(first_num, |acc, a| match a {
+                Atom::Number(num) => Ok(acc / num),
+                _ => Err("Syntax Error: - can only be used with numbers")?
+            });
+            Ok(Atom::Number(res?))
+        },
+        _ => Err("Syntax Error: - can only be used with numbers")?
+    }
+}
 pub fn greater(tokens: Vec<Atom>) -> Result<Atom, Box<dyn Error>> {
     if tokens.len() == 2 {
         let tokens_num: Result<Vec<&f64>, Box<dyn Error>> = tokens.iter().map(|a| match a {
@@ -127,6 +140,31 @@ mod tests {
     }
 
     // Tests:
+    // TODO: test errors
+    #[test]
+    fn plus_test() {
+        assert_eq!(Atom::Number(7f64),
+                   plus(get_input_num_only()).unwrap());
+    }
+
+   #[test]
+    fn multiply_test() {
+        assert_eq!(Atom::Number(10f64),
+                   multiply(get_input_num_only()).unwrap());
+    }
+
+    #[test]
+    fn minus_test() {
+        assert_eq!(Atom::Number(3f64),
+                   minus(get_input_num_only()).unwrap());
+    }
+
+    #[test]
+    fn divide_test() {
+        assert_eq!(Atom::Number(2.5f64),
+                   divide(get_input_num_only()).unwrap());
+    }
+
     #[test]
     fn greater_test() {
         assert_eq!(Atom::True,

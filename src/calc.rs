@@ -117,6 +117,7 @@ fn eval(tokens: Vec<Atom>) -> Result<String, Box<dyn Error>>{
     ops.insert("+".to_string(), funcs::plus);
     ops.insert("-".to_string(), funcs::minus);
     ops.insert("*".to_string(), funcs::multiply);
+    ops.insert("/".to_string(), funcs::divide);
     ops.insert(">".to_string(), funcs::greater);
     ops.insert("<".to_string(), funcs::smaller);
     ops.insert("if".to_string(), funcs::if_branch);
@@ -176,5 +177,19 @@ fn eval(tokens: Vec<Atom>) -> Result<String, Box<dyn Error>>{
         }
     } else {
         Err("Syntax Error: Missing closing parenthese")?
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn compute_cells_test() {
+        let input = vec![vec!["1".to_string(), "2".to_string()],
+                         vec!["3".to_string(), "(+ (- A1 B1) A2)".to_string()]];
+        let output = vec![vec!["1".to_string(), "2".to_string()],
+                         vec!["3".to_string(), "2".to_string()]];
+        assert_eq!(output, compute_cells(input))
     }
 }
