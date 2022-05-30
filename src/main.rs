@@ -1,6 +1,7 @@
 use macroquad::prelude::*;
 pub mod application;
 pub mod commands;
+pub mod eval;
 use application::Mode;
 
 static ASCII_LOWER: [char; 26] = [
@@ -58,7 +59,7 @@ async fn main() {
         let cell_height = font_size + cl.padding * 2.0;
         let x_offset = cl.margin + cell_height;
 
-        for i in 0..state.cells_eval.len(){
+        for i in 0..state.cells_eval[0].len(){
             let x = x_offset + (cl.width + cl.margin) * i as f32;
             let y = cl.margin + top_bar_height;
             let text = ASCII_LOWER[i].to_string();
@@ -68,7 +69,7 @@ async fn main() {
                          state.text_params_items.dark)
         }
 
-        for i in 0..state.cells_eval[0].len(){
+        for i in 0..state.cells_eval.len(){
             let x = cl.margin + state.cell_data.padding;
             let y = cell_height + cl.margin + top_bar_height + i as f32 * (cell_height + cl.margin);
             let text = (i + 1).to_string();
@@ -82,8 +83,8 @@ async fn main() {
 
         for i in 0..state.cells_eval.len(){
             for j in 0..state.cells_eval[i].len(){
-                let x = x_offset + (cl.width + cl.margin) * i as f32;
-                let y = cell_height + cl.margin + top_bar_height + j as f32 * (cell_height + cl.margin);
+                let x = x_offset + (cl.width + cl.margin) * j as f32;
+                let y = cell_height + cl.margin + top_bar_height + i as f32 * (cell_height + cl.margin);
                 draw_rectangle(x, y, cl.width, cell_height, state.theme.cells);
 
                 if cl.selection == (i, j) {

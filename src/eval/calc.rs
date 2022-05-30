@@ -4,7 +4,7 @@ use std::collections::HashMap;
 pub mod funcs;
 use funcs::Atom;
 
-pub fn compute_cells(mut cells: Vec<Vec<String>>) -> Vec<Vec<String>> {
+pub fn compute_cells(cells: &mut Vec<Vec<String>>){
     for i in 0..cells.len(){
         for j in 0..cells[i].len(){
             let cell = cells[i][j].clone();
@@ -13,7 +13,6 @@ pub fn compute_cells(mut cells: Vec<Vec<String>>) -> Vec<Vec<String>> {
             }
         }
     }
-    cells
 }
 
 fn calc_lisp(cells: &Vec<Vec<String>>, sexp: String) -> String {

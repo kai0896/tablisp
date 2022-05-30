@@ -2,16 +2,15 @@ use std::fs;
 pub mod calc;
 
 pub fn eval_csv_at_path(path: String) {
-    let cells = parse_csv(path.clone());
-    let new_cells = calc::compute_cells(cells);
+    let mut cells = parse_csv(path.clone());
+    calc::compute_cells(&mut cells);
 
-    let new_csv = make_csv(new_cells);
+    let new_csv = make_csv(cells);
     print!("new cells: \n\n{}", new_csv);
 
     let mut save_path = path.clone();
     save_path.insert_str(path.len()-4, "_calced");
     fs::write(save_path, new_csv).expect("Unable to write file");
-
 }
 
 pub fn parse_csv(contents: String) -> Vec<Vec<String>> {

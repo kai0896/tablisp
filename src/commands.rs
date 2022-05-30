@@ -1,5 +1,6 @@
 use macroquad::prelude::*;
 use crate::application::{State, Mode};
+use crate::eval::calc::compute_cells;
 
 pub fn input(state: &mut State) {
     if let Some(key) = get_last_key_pressed(){
@@ -30,6 +31,7 @@ pub fn input(state: &mut State) {
                     KeyCode::Enter => {
                         state.mode = Mode::Cell;
                         state.cells_eval[state.cell_data.selection.0][state.cell_data.selection.1] = state.insert_bar.text.clone();
+                        compute_cells(&mut state.cells_eval);
                     }
                     _ => (),
                 }
@@ -61,10 +63,10 @@ pub fn input(state: &mut State) {
             Mode::Cell => {
                 let cl = &mut state.cell_data;
                 match keychar {
-                    'l' => cl.selection = (cl.selection.0+1, cl.selection.1),
-                    'h' => cl.selection = (cl.selection.0-1, cl.selection.1),
-                    'k' => cl.selection = (cl.selection.0, cl.selection.1-1),
-                    'j' => cl.selection = (cl.selection.0, cl.selection.1+1),
+                    'j' => cl.selection = (cl.selection.0+1, cl.selection.1),
+                    'k' => cl.selection = (cl.selection.0-1, cl.selection.1),
+                    'h' => cl.selection = (cl.selection.0, cl.selection.1-1),
+                    'l' => cl.selection = (cl.selection.0, cl.selection.1+1),
                     'i' => {
                         state.mode = Mode::Insert;
                         state.insert_bar.point_pos = state.insert_bar.text.len();

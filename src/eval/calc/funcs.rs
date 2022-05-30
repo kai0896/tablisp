@@ -104,7 +104,7 @@ pub fn smaller(tokens: Vec<Atom>) -> Result<Atom, Box<dyn Error>> {
     }
 }
 
-pub fn if_branch(tokens: Vec<Atom>) -> Result<Atom, Box<dyn Error>> {
+pub fn if_branch(mut tokens: Vec<Atom>) -> Result<Atom, Box<dyn Error>> {
     if tokens.len() == 3 {
         let first = tokens.pop().unwrap();
         match first {

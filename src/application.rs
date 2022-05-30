@@ -1,4 +1,6 @@
 use macroquad::prelude::*;
+use std::fs;
+use crate::eval::parse_csv;
 
 pub struct State {
     pub mode: Mode,
@@ -83,8 +85,10 @@ pub async fn init_state() -> State {
         black,
     };
 
-    let cells_eval = vec!(vec!("".to_string(), "2".to_string(), "4".to_string()),
-                          vec!("".to_string(), "Hi".to_string()));
+    // let cells_eval = vec!(vec!("".to_string(), "2".to_string(), "4".to_string()),
+    //                       vec!("".to_string(), "Hi".to_string()));
+    let csv_content = fs::read_to_string("../assets/test.csv").unwrap();
+    let cells_eval = parse_csv(csv_content);
 
     let text_dimensions = measure_text("Hay",
                                        Some(default.font),
