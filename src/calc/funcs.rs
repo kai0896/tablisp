@@ -21,7 +21,7 @@ pub fn plus(tokens: Vec<Atom>) -> Result<Atom, Box<dyn Error>> {
 pub fn multiply(tokens: Vec<Atom>) -> Result<Atom, Box<dyn Error>> {
     let res: Result<f64, _> = tokens.iter().try_fold(1.0, |acc, a| match a {
         Atom::Number(num) => Ok(acc * num),
-        _ => Err("Syntax Error: + can only be used with numbers")
+        _ => Err("Syntax Error: * can only be used with numbers")
     });
     Ok(Atom::Number(res?))
 }
@@ -46,13 +46,30 @@ pub fn divide(mut tokens: Vec<Atom>) -> Result<Atom, Box<dyn Error>> {
         Atom::Number(first_num) => {
             let res: Result<f64, Box<dyn Error>> = tokens.iter().try_fold(first_num, |acc, a| match a {
                 Atom::Number(num) => Ok(acc / num),
-                _ => Err("Syntax Error: - can only be used with numbers")?
+                _ => Err("Syntax Error: / can only be used with numbers")?
             });
             Ok(Atom::Number(res?))
         },
-        _ => Err("Syntax Error: - can only be used with numbers")?
+        _ => Err("Syntax Error: / can only be used with numbers")?
     }
 }
+pub fn equal(tokens: Vec<Atom>) -> Result<Atom, Box<dyn Error>> {
+    if tokens.len() == 2 {
+        let tokens_num: Result<Vec<&f64>, Box<dyn Error>> = tokens.iter().map(|a| match a {
+            Atom::Number(num) => return Ok(num),
+            _ => Err("Syntax Error: = can only be used with numbers")?
+        }).collect();
+        let nums = tokens_num?;
+        if nums[1] == nums[0] {
+            return Ok(Atom::True)
+        } else {
+            return Ok(Atom::False)
+        }
+    } else {
+        Err("Syntax Error: > requires exactly 2 arguments")?
+    }
+}
+
 pub fn greater(tokens: Vec<Atom>) -> Result<Atom, Box<dyn Error>> {
     if tokens.len() == 2 {
         let tokens_num: Result<Vec<&f64>, Box<dyn Error>> = tokens.iter().map(|a| match a {
@@ -87,7 +104,7 @@ pub fn smaller(tokens: Vec<Atom>) -> Result<Atom, Box<dyn Error>> {
     }
 }
 
-pub fn if_branch(mut tokens: Vec<Atom>) -> Result<Atom, Box<dyn Error>> {
+pub fn if_branch(tokens: Vec<Atom>) -> Result<Atom, Box<dyn Error>> {
     if tokens.len() == 3 {
         let first = tokens.pop().unwrap();
         match first {
@@ -102,7 +119,7 @@ pub fn if_branch(mut tokens: Vec<Atom>) -> Result<Atom, Box<dyn Error>> {
 }
 
 pub fn max_num(tokens: Vec<Atom>) -> Result<Atom, Box<dyn Error>> {
-    let res = tokens.into_iter() .filter_map(|a| match a {
+    let res = tokens.into_iter().filter_map(|a| match a {
         Atom::Number(num) => Some(num),
         _ => None
     }).collect::<Vec<f64>>();
@@ -113,7 +130,7 @@ pub fn max_num(tokens: Vec<Atom>) -> Result<Atom, Box<dyn Error>> {
 }
 
 pub fn min_num(tokens: Vec<Atom>) -> Result<Atom, Box<dyn Error>> {
-    let res = tokens.into_iter() .filter_map(|a| match a {
+    let res = tokens.into_iter().filter_map(|a| match a {
         Atom::Number(num) => Some(num),
         _ => None
     }).collect::<Vec<f64>>();
@@ -163,6 +180,17 @@ mod tests {
     fn divide_test() {
         assert_eq!(Atom::Number(2.5f64),
                    divide(get_input_num_only()).unwrap());
+    }
+
+    #[test]
+    fn equal_test() {
+        assert_eq!(Atom::False,
+                   equal(get_input_num_only()).unwrap());
+
+        let input = vec![Atom::Number(2.5f64),
+                         Atom::Number(2.5f64),];
+        assert_eq!(Atom::True,
+                   equal(input).unwrap());
     }
 
     #[test]

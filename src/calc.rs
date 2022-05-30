@@ -82,7 +82,6 @@ fn cell_content_from_range(cells: &Vec<Vec<String>>, cell_range: String) -> Opti
     } else {
         None
     }
-
 }
 
 fn cell_content_from_refrence(cells: &Vec<Vec<String>>, cell_ref: String) -> Option<Atom> {
