@@ -4,18 +4,23 @@ use std::collections::HashMap;
 pub mod funcs;
 use funcs::Atom;
 
-pub fn compute_cells(cells: &mut Vec<Vec<String>>){
+pub struct Cell {
+    pub content: String,
+    pub result: Option<String>,
+}
+
+pub fn compute_cells(cells: &mut Vec<Vec<Cell>>){
     for i in 0..cells.len(){
         for j in 0..cells[i].len(){
-            let cell = cells[i][j].clone();
+            let cell = cells[i][j].content.clone();
             if cell.len() > 0 && cell.chars().next().unwrap() == '('{
-                cells[i][j] = calc_lisp(&cells, cell)
+                cells[i][j].result = Some(calc_lisp(&cells, cell));
             }
         }
     }
 }
 
-fn calc_lisp(cells: &Vec<Vec<String>>, sexp: String) -> String {
+fn calc_lisp(cells: &Vec<Vec<Cell>>, sexp: String) -> String {
     let tokens = tokenize(&sexp);
     let size = tokens.len() * 2;
     let tokens_typed: Vec<Atom> = tokens.iter().fold(Vec::with_capacity(size), |mut acc, v| {
@@ -35,7 +40,7 @@ fn tokenize(input: &String) -> Vec<String> {
          .collect::<Vec<String>>()
 }
 
-fn string_to_atom(string: String, cells: &Vec<Vec<String>>) -> Vec<Atom> {
+fn string_to_atom(string: String, cells: &Vec<Vec<Cell>>) -> Vec<Atom> {
     match string.as_str() {
         "(" => vec!(Atom::Open),
         ")" => vec!(Atom::Close),
@@ -55,7 +60,7 @@ fn string_to_atom(string: String, cells: &Vec<Vec<String>>) -> Vec<Atom> {
     }
 }
 
-fn cell_content_from_range(cells: &Vec<Vec<String>>, cell_range: String) -> Option<Vec<Atom>> {
+fn cell_content_from_range(cells: &Vec<Vec<Cell>>, cell_range: String) -> Option<Vec<Atom>> {
     let cell_refs = cell_range.split(":").map(String::from).collect::<Vec<String>>();
 
     if cell_refs.len() == 2 {
@@ -67,7 +72,11 @@ fn cell_content_from_range(cells: &Vec<Vec<String>>, cell_range: String) -> Opti
             for col in range_begin.1..=range_end.1 {
                 match cells.get(row)?.get(col) {
                     Some(cell) => {
-                        match cell.parse::<f64>() {
+                        let text = match &cell.result {
+                            Some(str) => str.clone(),
+                            None => cell.content.clone()
+                        };
+                        match text.parse::<f64>() {
                             Ok(num) => res.push(Atom::Number(num)),
                             Err(_) => ()
                         }
@@ -83,10 +92,14 @@ fn cell_content_from_range(cells: &Vec<Vec<String>>, cell_range: String) -> Opti
     }
 }
 
-fn cell_content_from_refrence(cells: &Vec<Vec<String>>, cell_ref: String) -> Option<Atom> {
+fn cell_content_from_refrence(cells: &Vec<Vec<Cell>>, cell_ref: String) -> Option<Atom> {
     let coords = get_cell_coordinates(cell_ref)?;
 
-    let res_str = cells.get(coords.0)?.get(coords.1)?;
+    let cell = &cells.get(coords.0)?.get(coords.1)?;
+    let res_str = match &cell.result {
+        Some(str) => str.clone(),
+        None => cell.content.clone()
+    };
     let res_num = res_str.parse::<f64>().ok()?;
     Some(Atom::Number(res_num))
 }
@@ -182,12 +195,4 @@ fn eval(tokens: Vec<Atom>) -> Result<String, Box<dyn Error>>{
 mod tests {
     use super::*;
 
-    #[test]
-    fn compute_cells_test() {
-        let input = vec![vec!["1".to_string(), "2".to_string()],
-                         vec!["3".to_string(), "(+ (- A1 B1) A2)".to_string()]];
-        let output = vec![vec!["1".to_string(), "2".to_string()],
-                         vec!["3".to_string(), "2".to_string()]];
-        assert_eq!(output, compute_cells(input))
-    }
 }

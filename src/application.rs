@@ -1,6 +1,9 @@
 use macroquad::prelude::*;
 use std::fs;
 use crate::eval::parse_csv;
+use crate::eval::calc::Cell;
+use crate::eval::calc::compute_cells;
+use crate::input::*;
 
 pub struct State {
     pub mode: Mode,
@@ -8,9 +11,11 @@ pub struct State {
     pub font_params: FontParams,
     pub insert_bar: InsertBar,
     // pub cells_raw: Vec<Vec<String>>,
-    pub cells_eval: Vec<Vec<String>>,
+    pub cells_eval: Vec<Vec<Cell>>,
     pub cell_data: CellData,
     pub theme: Theme,
+    pub keymap: KeyMap,
+    pub last_key: char,
 }
 
 pub struct FontParams {
@@ -18,7 +23,7 @@ pub struct FontParams {
     pub offset_y: f32,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Eq, Hash)]
 pub enum Mode {
     Normal,
     Insert,
@@ -53,6 +58,7 @@ pub struct TextParamsItems {
     pub dark: TextParams,
     pub black: TextParams
 }
+
 pub async fn init_state() -> State {
 
     let font = load_ttf_font("../assets/fonts/robotoMono/RobotoMono-Regular.ttf").await.unwrap();
@@ -88,7 +94,8 @@ pub async fn init_state() -> State {
     // let cells_eval = vec!(vec!("".to_string(), "2".to_string(), "4".to_string()),
     //                       vec!("".to_string(), "Hi".to_string()));
     let csv_content = fs::read_to_string("../assets/test.csv").unwrap();
-    let cells_eval = parse_csv(csv_content);
+    let mut cells_eval = parse_csv(csv_content);
+    compute_cells(&mut cells_eval);
 
     let text_dimensions = measure_text("Hay",
                                        Some(default.font),
@@ -110,10 +117,12 @@ pub async fn init_state() -> State {
     };
 
     let insert_bar = InsertBar {
-        text: cells_eval[cell_data.selection.0][cell_data.selection.1].clone(),
-        padding: 10.0,
+        text: cells_eval[cell_data.selection.0][cell_data.selection.1].content.clone(),
+        padding: 16.0,
         point_pos: 0
     };
+
+    let keymap = init_input();
 
     State {
         mode: Mode::Cell,
@@ -122,6 +131,8 @@ pub async fn init_state() -> State {
         insert_bar,
         cells_eval,
         cell_data,
-        theme
+        theme,
+        keymap,
+        last_key: ' ',
     }
 }

@@ -1,81 +1,76 @@
-use macroquad::prelude::*;
-use crate::application::{State, Mode};
+use crate::application::{State, Mode, CellData};
 use crate::eval::calc::compute_cells;
 
-pub fn input(state: &mut State) {
-    if let Some(key) = get_last_key_pressed(){
-        match state.mode {
-            Mode::Normal => {
-                match key {
-                    KeyCode::Escape => {
-                        state.mode = Mode::Cell;
-                        state.cells_eval[state.cell_data.selection.0][state.cell_data.selection.1] = state.insert_bar.text.clone();
-                    }
-                    KeyCode::Enter => {
-                        state.mode = Mode::Cell;
-                        state.cells_eval[state.cell_data.selection.0][state.cell_data.selection.1] = state.insert_bar.text.clone();
-                    }
-                    _ => (),
-                }
-            },
-            Mode::Insert => {
-                match key {
-                    KeyCode::Backspace => {
-                        state.insert_bar.point_pos -= 1;
-                        state.insert_bar.text.remove(state.insert_bar.point_pos);
-                    }
-                    KeyCode::Escape => {
-                        state.mode = Mode::Normal;
-                        state.insert_bar.point_pos -= 1;
-                    }
-                    KeyCode::Enter => {
-                        state.mode = Mode::Cell;
-                        state.cells_eval[state.cell_data.selection.0][state.cell_data.selection.1] = state.insert_bar.text.clone();
-                        compute_cells(&mut state.cells_eval);
-                    }
-                    _ => (),
-                }
-            },
-            Mode::Cell => (),
-        }
-    }
+pub type Command = fn(&mut State);
 
-    if let Some(keychar) = get_char_pressed() {
-        debug!("{}", keychar);
+pub fn cell_to_insert(state: &mut State) {
+    state.mode = Mode::Insert;
+    state.insert_bar.point_pos = state.insert_bar.text.len();
+}
 
-        match state.mode {
-            Mode::Normal => {
-                match keychar {
-                    'l' => state.insert_bar.point_pos += 1,
-                    'h' => state.insert_bar.point_pos -= 1,
-                    'i' => state.mode = Mode::Insert,
-                    'a' => {
-                        state.mode = Mode::Insert;
-                        state.insert_bar.point_pos += 1;
-                    }
-                    _ => (),
-                }
-            },
-            Mode::Insert => {
-                state.insert_bar.text.insert(state.insert_bar.point_pos, keychar);
-                state.insert_bar.point_pos += 1;
-            },
-            Mode::Cell => {
-                let cl = &mut state.cell_data;
-                match keychar {
-                    'j' => cl.selection = (cl.selection.0+1, cl.selection.1),
-                    'k' => cl.selection = (cl.selection.0-1, cl.selection.1),
-                    'h' => cl.selection = (cl.selection.0, cl.selection.1-1),
-                    'l' => cl.selection = (cl.selection.0, cl.selection.1+1),
-                    'i' => {
-                        state.mode = Mode::Insert;
-                        state.insert_bar.point_pos = state.insert_bar.text.len();
-                    },
-                    _ => (),
-                }
-                state.insert_bar.text = state.cells_eval[cl.selection.0][cl.selection.1].clone();
-            }
-            _ => (),
-        }
-    }
+pub fn normal_left(state: &mut State) {
+    state.insert_bar.point_pos += 1;
+}
+
+pub fn normal_right(state: &mut State) {
+    state.insert_bar.point_pos -= 1;
+}
+
+pub fn normal_to_insert_i(state: &mut State) {
+    state.mode = Mode::Insert;
+}
+
+pub fn normal_to_insert_a(state: &mut State) {
+    state.mode = Mode::Insert;
+    state.insert_bar.point_pos += 1;
+}
+
+pub fn insert_input(state: &mut State) {
+    let keychar = state.last_key;
+    state.insert_bar.text.insert(state.insert_bar.point_pos , keychar);
+    state.insert_bar.point_pos += 1;
+}
+
+pub fn cell_down(state: &mut State) {
+    cell_move(state, (1,0))
+}
+
+pub fn cell_up(state: &mut State) {
+    cell_move(state, (-1,0))
+}
+
+pub fn cell_left(state: &mut State) {
+    cell_move(state, (0,-1))
+}
+
+pub fn cell_right(state: &mut State) {
+    cell_move(state, (0,1))
+}
+
+fn cell_move(state: &mut State, movement: (i32, i32)) {
+    let cl = &mut state.cell_data;
+    let move_cell = |o, m| {
+        ((o as i32 + m) as i32).max(0) as usize
+    };
+    cl.selection = (move_cell(cl.selection.0, movement.0),
+                    move_cell(cl.selection.1, movement.1));
+
+    state.insert_bar.text = state.cells_eval[cl.selection.0][cl.selection.1].content.clone();
+}
+
+pub fn to_cell_mode(state: &mut State) {
+    state.mode = Mode::Cell;
+    state.cells_eval[state.cell_data.selection.0][state.cell_data.selection.1].content = state.insert_bar.text.clone();
+    state.cells_eval[state.cell_data.selection.0][state.cell_data.selection.1].result = None;
+    compute_cells(&mut state.cells_eval);
+}
+
+pub fn insert_to_normal(state: &mut State) {
+    state.mode = Mode::Normal;
+    state.insert_bar.point_pos -= 1;
+}
+
+pub fn insert_remove_char(state: &mut State) {
+    state.insert_bar.point_pos -= 1;
+    state.insert_bar.text.remove(state.insert_bar.point_pos);
 }

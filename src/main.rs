@@ -2,6 +2,7 @@ use macroquad::prelude::*;
 pub mod application;
 pub mod commands;
 pub mod eval;
+pub mod input;
 use application::Mode;
 
 static ASCII_LOWER: [char; 26] = [
@@ -19,7 +20,8 @@ async fn main() {
     let mut state = application::init_state().await;
 
     loop {
-        commands::input(&mut state);
+        // commands::input(&mut state);
+        input::handle_input(&mut state);
 
         clear_background(state.theme.background);
 
@@ -58,8 +60,10 @@ async fn main() {
         let cl = &state.cell_data;
         let cell_height = font_size + cl.padding * 2.0;
         let x_offset = cl.margin + cell_height;
+        let cell_cols = (screen_width() / (cl.width + cl.margin) as f32) as usize + 1;
+        let cell_rows = (screen_height() / (cell_height + cl.margin) as f32) as usize;
 
-        for i in 0..state.cells_eval[0].len(){
+        for i in 0..cell_cols{
             let x = x_offset + (cl.width + cl.margin) * i as f32;
             let y = cl.margin + top_bar_height;
             let text = ASCII_LOWER[i].to_string();
@@ -69,7 +73,7 @@ async fn main() {
                          state.text_params_items.dark)
         }
 
-        for i in 0..state.cells_eval.len(){
+        for i in 0..cell_rows{
             let x = cl.margin + state.cell_data.padding;
             let y = cell_height + cl.margin + top_bar_height + i as f32 * (cell_height + cl.margin);
             let text = (i + 1).to_string();
@@ -81,8 +85,8 @@ async fn main() {
 
         // cells
 
-        for i in 0..state.cells_eval.len(){
-            for j in 0..state.cells_eval[i].len(){
+        for i in 0..cell_rows{
+            for j in 0..cell_cols{
                 let x = x_offset + (cl.width + cl.margin) * j as f32;
                 let y = cell_height + cl.margin + top_bar_height + i as f32 * (cell_height + cl.margin);
                 draw_rectangle(x, y, cl.width, cell_height, state.theme.cells);
@@ -91,7 +95,21 @@ async fn main() {
                     draw_rectangle_lines(x, y, cl.width, cell_height, cl.margin, state.theme.selection);
                 }
 
-                let mut text = state.cells_eval[i][j].clone();
+                let mut text = match &state.cells_eval.get(i) {
+                    Some(row) => {
+                        match row.get(j) {
+                            Some(cell) => {
+                                match &cell.result {
+                                    Some(str) => str.clone(),
+                                    None => cell.content.clone()
+                                }
+                            }
+                            None => "".to_string()
+                        }
+                    }
+                    None => "".to_string()
+                };
+
                 if text.len() > state.cell_data.width_char-1 {
                     text.truncate(state.cell_data.width_char - 2);
                     text.push('…');
