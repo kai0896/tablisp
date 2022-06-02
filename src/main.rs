@@ -102,7 +102,8 @@ async fn main() {
                         Some(str) => str.clone(),
                         None => cell.content.clone()
                     }
-                } else {
+                }
+                else {
                     "".to_string()
                 };
 
@@ -118,6 +119,24 @@ async fn main() {
             }
         }
 
+        // info bar
+
+        let info_bar_height = font_size + state.info_bar.padding * 2.0;
+        let info_bar_pos_y = screen_height() - info_bar_height;
+        draw_rectangle(0.0,
+                       info_bar_pos_y,
+                       screen_width(),
+                       info_bar_height,
+                       state.theme.background);
+
+        if let Some(text) = state.info_bar.log.last() {
+            draw_text_ex(text,
+                         state.info_bar.padding,
+                         info_bar_pos_y + info_bar_height/2.0 + state.font_params.offset_y/2.0 - font_size * 0.08,
+                         state.text_params_items.default);
+        }
+
+        // wait for next frame
         next_frame().await
     }
 }

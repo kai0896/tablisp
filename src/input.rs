@@ -53,9 +53,12 @@ pub fn handle_input(state: &mut State) {
                 if let Some(command) = mode.get(&KeyComp::AnyChar) {
                     state.last_key = keychar;
                     command(state);
+                } else {
+                    state.info_bar.log.push(format!("{} is undefined in {:?} mode", keychar, state.mode));
                 }
             }
         }
+        return
     }
 
     if let Some(key) = get_last_key_pressed(){

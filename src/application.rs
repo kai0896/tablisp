@@ -10,7 +10,7 @@ pub struct State {
     pub text_params_items: TextParamsItems,
     pub font_params: FontParams,
     pub insert_bar: InsertBar,
-    // pub cells_raw: Vec<Vec<String>>,
+    pub info_bar: InfoBar,
     pub cells_eval: Vec<Vec<Cell>>,
     pub cell_data: CellData,
     pub theme: Theme,
@@ -23,7 +23,7 @@ pub struct FontParams {
     pub offset_y: f32,
 }
 
-#[derive(PartialEq, Eq, Hash)]
+#[derive(PartialEq, Eq, Hash, Debug)]
 pub enum Mode {
     Normal,
     Insert,
@@ -34,6 +34,11 @@ pub struct InsertBar {
     pub text: String,
     pub padding: f32,
     pub point_pos: usize,
+}
+
+pub struct InfoBar {
+    pub log: Vec<String>,
+    pub padding: f32
 }
 
 pub struct CellData {
@@ -122,6 +127,11 @@ pub async fn init_state() -> State {
         point_pos: 0
     };
 
+    let info_bar = InfoBar {
+        log: Vec::new(),
+        padding: 16.0,
+    };
+
     let keymap = init_input();
 
     State {
@@ -129,6 +139,7 @@ pub async fn init_state() -> State {
         text_params_items,
         font_params,
         insert_bar,
+        info_bar,
         cells_eval,
         cell_data,
         theme,

@@ -1,13 +1,15 @@
-use crate::application::{State, Mode, CellData};
+use crate::application::{State, Mode};
 use crate::eval::calc::compute_cells;
 
 pub type Command = fn(&mut State);
 
 pub fn cell_to_insert(state: &mut State) {
     if let Some(_) = state.cells_eval.get(state.cell_data.selection.0)
-                                        .and_then(|a| a.get(state.cell_data.selection.1)) {
+                                     .and_then(|a| a.get(state.cell_data.selection.1)) {
         state.mode = Mode::Insert;
         state.insert_bar.point_pos = state.insert_bar.text.len();
+    } else {
+        state.info_bar.log.push("Cell not there yet TODO: creat cell".to_string());
     }
 }
 
