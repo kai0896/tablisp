@@ -29,8 +29,8 @@ pub fn init_input() -> KeyMap {
     keys_insert.insert(KeyComp::Mod(KeyCode::Backspace), insert_remove_char);
 
     let mut keys_normal: HashMap<KeyComp, Command> = HashMap::new();
-    keys_normal.insert(KeyComp::NoMod('l'), normal_left);
-    keys_normal.insert(KeyComp::NoMod('h'), normal_right);
+    keys_normal.insert(KeyComp::NoMod('h'), normal_left);
+    keys_normal.insert(KeyComp::NoMod('l'), normal_right);
     keys_normal.insert(KeyComp::NoMod('i'), normal_to_insert_i);
     keys_normal.insert(KeyComp::NoMod('a'), normal_to_insert_a);
     keys_normal.insert(KeyComp::Mod(KeyCode::Enter), to_cell_mode);

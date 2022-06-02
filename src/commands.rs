@@ -13,12 +13,16 @@ pub fn cell_to_insert(state: &mut State) {
     }
 }
 
-pub fn normal_left(state: &mut State) {
-    state.insert_bar.point_pos += 1;
+pub fn normal_right(state: &mut State) {
+    if state.insert_bar.text.len() > 0 && state.insert_bar.point_pos < state.insert_bar.text.len() - 1 {
+        state.insert_bar.point_pos += 1;
+    }
 }
 
-pub fn normal_right(state: &mut State) {
-    state.insert_bar.point_pos -= 1;
+pub fn normal_left(state: &mut State) {
+    if state.insert_bar.point_pos > 0 {
+        state.insert_bar.point_pos -= 1;
+    }
 }
 
 pub fn normal_to_insert_i(state: &mut State) {
@@ -74,10 +78,16 @@ pub fn to_cell_mode(state: &mut State) {
 
 pub fn insert_to_normal(state: &mut State) {
     state.mode = Mode::Normal;
-    state.insert_bar.point_pos -= 1;
+    if state.insert_bar.text.len() > 0{
+        state.insert_bar.point_pos -= 1;
+    }
 }
 
 pub fn insert_remove_char(state: &mut State) {
-    state.insert_bar.point_pos -= 1;
-    state.insert_bar.text.remove(state.insert_bar.point_pos);
+    if state.insert_bar.text.len() > 0{
+        state.insert_bar.point_pos -= 1;
+        state.insert_bar.text.remove(state.insert_bar.point_pos);
+    } else {
+        state.info_bar.log.push("Nothing there to remove".to_string());
+    }
 }
