@@ -4,8 +4,11 @@ use crate::eval::calc::compute_cells;
 pub type Command = fn(&mut State);
 
 pub fn cell_to_insert(state: &mut State) {
-    state.mode = Mode::Insert;
-    state.insert_bar.point_pos = state.insert_bar.text.len();
+    if let Some(_) = state.cells_eval.get(state.cell_data.selection.0)
+                                        .and_then(|a| a.get(state.cell_data.selection.1)) {
+        state.mode = Mode::Insert;
+        state.insert_bar.point_pos = state.insert_bar.text.len();
+    }
 }
 
 pub fn normal_left(state: &mut State) {
@@ -55,7 +58,9 @@ fn cell_move(state: &mut State, movement: (i32, i32)) {
     cl.selection = (move_cell(cl.selection.0, movement.0),
                     move_cell(cl.selection.1, movement.1));
 
-    state.insert_bar.text = state.cells_eval[cl.selection.0][cl.selection.1].content.clone();
+    if let Some(cell) = state.cells_eval.get(cl.selection.0).and_then(|a| a.get(cl.selection.1)) {
+        state.insert_bar.text = cell.content.clone();
+    }
 }
 
 pub fn to_cell_mode(state: &mut State) {

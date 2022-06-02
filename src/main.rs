@@ -91,30 +91,26 @@ async fn main() {
                 let y = cell_height + cl.margin + top_bar_height + i as f32 * (cell_height + cl.margin);
                 draw_rectangle(x, y, cl.width, cell_height, state.theme.cells);
 
+                // draw outline of selected cell
                 if cl.selection == (i, j) {
                     draw_rectangle_lines(x, y, cl.width, cell_height, cl.margin, state.theme.selection);
                 }
 
-                let mut text = match &state.cells_eval.get(i) {
-                    Some(row) => {
-                        match row.get(j) {
-                            Some(cell) => {
-                                match &cell.result {
-                                    Some(str) => str.clone(),
-                                    None => cell.content.clone()
-                                }
-                            }
-                            None => "".to_string()
-                        }
+                // get, truncate and draw the cell text
+                let mut text = if let Some(cell) = state.cells_eval.get(i) .and_then(|a| a.get(j)) {
+                    match &cell.result {
+                        Some(str) => str.clone(),
+                        None => cell.content.clone()
                     }
-                    None => "".to_string()
+                } else {
+                    "".to_string()
                 };
 
                 if text.len() > state.cell_data.width_char-1 {
                     text.truncate(state.cell_data.width_char - 2);
                     text.push('…');
-
                 }
+
                 draw_text_ex(&text,
                              x + cl.padding,
                              y + cell_height/2.0 + state.font_params.offset_y/2.0 - font_size * 0.05,
