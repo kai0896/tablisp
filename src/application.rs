@@ -79,8 +79,8 @@ pub async fn init_state() -> State {
 
     let default = TextParams {
         font,
-        font_size: 24,
-        font_scale: 1.0,
+        font_size: 44,
+        font_scale: 0.5,
         font_scale_aspect: 1.0,
         color: theme.text,
     };
@@ -105,7 +105,7 @@ pub async fn init_state() -> State {
     let text_dimensions = measure_text("Hay",
                                        Some(default.font),
                                        default.font_size,
-                                       1.0);
+                                       default.font_scale);
     let font_params = FontParams {
         char_width: text_dimensions.width/3.0,
         offset_y: text_dimensions.offset_y,
@@ -113,11 +113,12 @@ pub async fn init_state() -> State {
     };
 
     let width_char = 12;
+    let padding = 10.0;
     let cell_data = CellData {
-        padding: 8.0,
+        padding,
         margin: 4.0,
         width_char,
-        width: width_char as f32 * font_params.char_width,
+        width: width_char as f32 * font_params.char_width + padding * 2.0,
         selection: (0,0)
     };
 

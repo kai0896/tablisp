@@ -26,7 +26,7 @@ async fn main() {
 
         // insert Bar
 
-        let font_size = *&state.text_params_items.default.font_size as f32;
+        let font_size = *&state.text_params_items.default.font_size as f32 * state.text_params_items.default.font_scale;
 
         let top_bar_height = font_size + state.insert_bar.padding * 2.0;
         let insert_bar_color = if state.mode == Mode::Cell {state.theme.cells} else {state.theme.insert_bar};
@@ -111,7 +111,7 @@ async fn main() {
                 }
 
                 // get, truncate and draw the cell text
-                let mut text = if let Some(cell) = state.cells_eval.get(i) .and_then(|a| a.get(j)) {
+                let mut text = if let Some(cell) = state.cells_eval.get(i).and_then(|a| a.get(j)) {
                     match &cell.result {
                         Some(str) => str.clone(),
                         None => cell.content.clone()
@@ -121,8 +121,8 @@ async fn main() {
                     "".to_string()
                 };
 
-                if text.len() > state.cell_data.width_char-1 {
-                    text.truncate(state.cell_data.width_char - 2);
+                if text.len() > state.cell_data.width_char {
+                    text.truncate(state.cell_data.width_char - 1);
                     text.push('…');
                 }
 
