@@ -20,12 +20,12 @@ async fn main() {
     let mut state = application::init_state().await;
 
     loop {
-        // commands::input(&mut state);
         input::handle_input(&mut state);
 
         clear_background(state.theme.background);
 
         // insert Bar
+
         let font_size = *&state.text_params_items.default.font_size as f32;
 
         let top_bar_height = font_size + state.insert_bar.padding * 2.0;
@@ -42,6 +42,14 @@ async fn main() {
                      state.insert_bar.padding,
                      top_bar_height/2.0 + state.font_params.offset_y/2.0 - font_size * 0.08,
                      state.text_params_items.default);
+
+        // cell positon
+        let cell_pos_text = ASCII_LOWER[state.cell_data.selection.1].to_string()
+            + &(state.cell_data.selection.0 + 1).to_string();
+        draw_text_ex(&cell_pos_text,
+                     screen_width() - state.insert_bar.padding - (cell_pos_text.len() as f32 * state.font_params.char_width),
+                     top_bar_height/2.0 + state.font_params.offset_y/2.0 - font_size * 0.08,
+                     state.text_params_items.dark);
 
         // point
         draw_rectangle(state.insert_bar.padding + point_pos_pix - 1.0,
@@ -63,10 +71,11 @@ async fn main() {
 
         let cl = &state.cell_data;
         let cell_height = font_size + cl.padding * 2.0;
-        let x_offset = cl.margin + cell_height;
+        let x_offset = cl.padding * 2.0 + state.font_params.char_width * 2.0;
         let cell_cols = (screen_width() / (cl.width + cl.margin) as f32) as usize + 1;
-        let cell_rows = (screen_height() / (cell_height + cl.margin) as f32) as usize;
+        let cell_rows = (screen_height() / (cell_height + cl.margin) as f32) as usize - 2;
 
+        // col labels
         for i in 0..cell_cols{
             let x = x_offset + (cl.width + cl.margin) * i as f32;
             let y = cl.margin + top_bar_height;
@@ -77,10 +86,11 @@ async fn main() {
                          state.text_params_items.dark)
         }
 
+        // row labels
         for i in 0..cell_rows{
-            let x = cl.margin + state.cell_data.padding;
-            let y = cell_height + cl.margin + top_bar_height + i as f32 * (cell_height + cl.margin);
             let text = (i + 1).to_string();
+            let x = cl.padding + (2 - text.len()) as f32 * state.font_params.char_width;
+            let y = cell_height + cl.margin + top_bar_height + i as f32 * (cell_height + cl.margin);
             draw_text_ex(&text,
                          x,
                          y + cell_height/2.0 + state.font_params.offset_y/2.0 - font_size * 0.05,
