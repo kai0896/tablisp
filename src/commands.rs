@@ -1,5 +1,5 @@
 use crate::application::{State, Mode};
-use crate::eval::calc::compute_cells;
+use crate::eval::calc::{compute_cells, get_cell_type};
 
 pub type Command = fn(&mut State);
 
@@ -71,8 +71,10 @@ fn cell_move(state: &mut State, movement: (i32, i32)) {
 
 pub fn to_cell_mode(state: &mut State) {
     state.mode = Mode::Cell;
-    state.cells_eval[state.cell_data.selection.0][state.cell_data.selection.1].content = state.insert_bar.text.clone();
+    let text = &state.insert_bar.text;
+    state.cells_eval[state.cell_data.selection.0][state.cell_data.selection.1].content = text.clone();
     state.cells_eval[state.cell_data.selection.0][state.cell_data.selection.1].result = None;
+    state.cells_eval[state.cell_data.selection.0][state.cell_data.selection.1].cell_type = get_cell_type(text);
     compute_cells(&mut state.cells_eval);
 }
 

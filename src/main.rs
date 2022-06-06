@@ -1,3 +1,4 @@
+use eval::calc::CellType;
 use macroquad::prelude::*;
 pub mod application;
 pub mod commands;
@@ -110,8 +111,10 @@ async fn main() {
                     draw_rectangle_lines(x, y, cl.width, cell_height, cl.margin, state.theme.selection);
                 }
 
+                let cell = state.cells_eval.get(i).and_then(|a| a.get(j));
+
                 // get, truncate and draw the cell text
-                let mut text = if let Some(cell) = state.cells_eval.get(i).and_then(|a| a.get(j)) {
+                let mut text = if let Some(cell) = cell {
                     match &cell.result {
                         Some(str) => str.clone(),
                         None => cell.content.clone()
@@ -121,13 +124,19 @@ async fn main() {
                     "".to_string()
                 };
 
+                let pos_x = if let Some(cell) = cell {
+                    if cell.cell_type == CellType::Number && text.len() <= state.cell_data.width_char {
+                        x + cl.width_char as f32 * state.font_params.char_width - (state.font_params.char_width * text.len() as f32)
+                    } else {x}
+                } else {x};
+
                 if text.len() > state.cell_data.width_char {
                     text.truncate(state.cell_data.width_char - 1);
                     text.push('…');
                 }
 
                 draw_text_ex(&text,
-                             x + cl.padding,
+                             pos_x + cl.padding,
                              y + cell_height/2.0 + state.font_params.offset_y/2.0 - font_size * 0.05,
                              state.text_params_items.default)
             }

@@ -4,9 +4,17 @@ use std::collections::HashMap;
 pub mod funcs;
 use funcs::Atom;
 
+#[derive(PartialEq)]
+pub enum CellType {
+    Number,
+    String,
+    Error
+}
+
 pub struct Cell {
     pub content: String,
     pub result: Option<String>,
+    pub cell_type: CellType,
 }
 
 pub fn compute_cells(cells: &mut Vec<Vec<Cell>>){
@@ -14,22 +22,35 @@ pub fn compute_cells(cells: &mut Vec<Vec<Cell>>){
         for j in 0..cells[i].len(){
             let cell = cells[i][j].content.clone();
             if cell.len() > 0 && cell.chars().next().unwrap() == '('{
-                cells[i][j].result = Some(calc_lisp(&cells, cell));
+                match calc_lisp(&cells, cell) {
+                    Ok(str) => {
+                        cells[i][j].result = Some(str);
+                        cells[i][j].cell_type = CellType::Number;
+                    },
+                    Err(err) => {
+                        cells[i][j].result = Some(err.to_string());
+                        cells[i][j].cell_type = CellType::Error;
+                    }
+                }
             }
         }
     }
 }
 
-fn calc_lisp(cells: &Vec<Vec<Cell>>, sexp: String) -> String {
+pub fn get_cell_type(string: &String) -> CellType {
+    match string.parse::<f64>() {
+        Ok(_) => CellType::Number,
+        Err(_) => CellType::String
+    }
+}
+
+fn calc_lisp(cells: &Vec<Vec<Cell>>, sexp: String) -> Result<String, Box<dyn Error>> {
     let tokens = tokenize(&sexp);
     let size = tokens.len() * 2;
     let tokens_typed: Vec<Atom> = tokens.iter().fold(Vec::with_capacity(size), |mut acc, v| {
         acc.extend(string_to_atom(v.to_string(), &cells)); acc
     });
-    match eval(tokens_typed) {
-        Ok(a) => a,
-        Err(e) => e.to_string()
-    }
+    eval(tokens_typed)
 }
 
 fn tokenize(input: &String) -> Vec<String> {

@@ -1,6 +1,6 @@
 use std::fs;
 pub mod calc;
-use calc::Cell;
+use calc::{Cell, get_cell_type};
 
 pub fn eval_csv_at_path(path: String) {
     let mut cells = parse_csv(path.clone());
@@ -22,7 +22,10 @@ pub fn parse_csv(contents: String) -> Vec<Vec<Cell>> {
         let line_vec = line_str.split(',')
                                .map(|a| a.trim())
                                .map(String::from)
-                               .map(|a| Cell {content: a, result: None})
+                               .map(|a| Cell {
+                                   content: a.clone(),
+                                   result: None,
+                               cell_type: get_cell_type(&a)})
                                .collect::<Vec<Cell>>();
         row_vec.push(line_vec);
     }
