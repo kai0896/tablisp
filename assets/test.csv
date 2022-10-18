@@ -1,7 +1,9 @@
-Kai, 15, new
-James, 60, 1
-Me, (+ B1:C2)
-Him, (- 10 B3)
-New Guy, (if (> B1 18) 1 0)
-test, (* 3.5 2 (- 4 C2))
-yes, (min B1:B3)
+Kai, 26
+James, 60
+Tom, 16
+,
+youngest?, (min B1:B3)
+oldest?, (max B1:B3)
+
+Avg, (/ (+ B1:B3) 3)
+old?, (if (> B8 20) 1 0)
