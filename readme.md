@@ -6,7 +6,7 @@ Proof of concept Rust project implementing a table processing tool with a vim-na
 
 GUI is created using macroquad game library and is composed only out of rectangles and text elements.
 
-Content gets parsed from a CSV-file and cells starting with paranthesis will be evaluated using the custom Lisp-interpreter which supports referencing of other cells and ranges.
+Content gets parsed from a CSV-file and cells starting with parantheses will be evaluated using the custom Lisp-interpreter which supports referencing of other cells and ranges.
 
 ## Setup
 
@@ -25,9 +25,8 @@ Edit Cell: ``i``
 Submit: ``Enter``  
 
 ### Calculations
-Cell will be evaluated whenever it starts with '('.  
 Supported operations: ``+, -, \*, /, >, if, max, min``  
-Syntax is just standard Lisp: ``(+ (\* 2 2) 3) => (+ 4 3) => (7)``  
+Syntax is just standard Lisp: ``(+ (\* 2 2) 3) => (+ 4 3) => 7``  
 
 Cells can be referenced as expected using the collumn letter followed by the row number eg. ``A1, C5``  
 Ranges can be written using ':' and will be expanded: ``(+ A1:A3) => (+ A1 A2 A3)``  
