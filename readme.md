@@ -1,5 +1,7 @@
 # Tablisp
 
+![](assets/demo.gif)
+
 Proof of concept Rust project implementing a table processing tool with a vim-navigation-based GUI and LISP-like language for calculations.
 
 GUI is created using macroquad game library and is composed only out of rectangles and text elements.
